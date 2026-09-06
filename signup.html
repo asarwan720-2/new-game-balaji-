@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -138,16 +139,13 @@ const client = supabase.createClient(
 
 // ================================
 // GET REFERRAL CODE FROM URL
-// Example:
-// signup.html?ref=AJAY1234
 // ================================
 
-const urlParams = new URLSearchParams(
-  window.location.search
-);
+const urlParams =
+new URLSearchParams(window.location.search);
 
 const referralFromURL =
-  urlParams.get("ref");
+urlParams.get("ref");
 
 
 // ================================
@@ -157,13 +155,13 @@ const referralFromURL =
 if (referralFromURL) {
 
   document.getElementById("ref_code").value =
-    referralFromURL.trim();
+    referralFromURL.trim().toUpperCase();
 
 }
 
 
 // ================================
-// GENERATE UNIQUE REFER CODE
+// GENERATE REFER CODE
 // ================================
 
 function generateReferCode() {
@@ -186,7 +184,36 @@ function generateReferCode() {
 
 
 // ================================
-// CHECK REFER CODE
+// CREATE UNIQUE REFER CODE
+// ================================
+
+async function createUniqueReferCode() {
+
+  while (true) {
+
+    const code =
+      generateReferCode();
+
+    const { data, error } =
+      await client
+        .from("login")
+        .select("id")
+        .eq("refer_code", code)
+        .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return code;
+    }
+  }
+}
+
+
+// ================================
+// CHECK REFERRAL CODE
 // ================================
 
 async function checkReferCode(code) {
@@ -195,16 +222,17 @@ async function checkReferCode(code) {
     return true;
   }
 
-  const { data, error } = await client
-    .from("login")
-    .select("id")
-    .eq("refer_code", code)
-    .maybeSingle();
+  const { data, error } =
+    await client
+      .from("login")
+      .select("id")
+      .eq("refer_code", code)
+      .maybeSingle();
 
   if (error) {
 
     console.log(
-      "REFER CODE CHECK ERROR:",
+      "REFERRAL CHECK ERROR:",
       error
     );
 
@@ -212,45 +240,6 @@ async function checkReferCode(code) {
   }
 
   return !!data;
-}
-
-
-// ================================
-// CREATE UNIQUE REFER CODE
-// ================================
-
-async function createUniqueReferCode() {
-
-  let referCode = "";
-
-  let exists = true;
-
-  while (exists) {
-
-    referCode =
-      generateReferCode();
-
-    const { data, error } =
-      await client
-        .from("login")
-        .select("id")
-        .eq("refer_code", referCode)
-        .maybeSingle();
-
-    if (error) {
-
-      console.log(
-        "REFER CODE GENERATE ERROR:",
-        error
-      );
-
-      throw error;
-    }
-
-    exists = !!data;
-  }
-
-  return referCode;
 }
 
 
@@ -293,15 +282,15 @@ async function signup() {
 
 
   // ================================
-  // CHECK REFERRAL CODE
+  // CHECK REFERRAL
   // ================================
 
   if (ref_code) {
 
-    const validRefer =
+    const valid =
       await checkReferCode(ref_code);
 
-    if (!validRefer) {
+    if (!valid) {
 
       alert(
         "Invalid Referral Code ❌"
@@ -313,7 +302,7 @@ async function signup() {
 
 
   // ================================
-  // CREATE NEW USER REFER CODE
+  // CREATE NEW USER CODE
   // ================================
 
   let myReferCode;
@@ -326,7 +315,7 @@ async function signup() {
   } catch (error) {
 
     console.log(
-      "CREATE REFER CODE ERROR:",
+      "REFER CODE ERROR:",
       error
     );
 
@@ -339,26 +328,27 @@ async function signup() {
 
 
   // ================================
-  // INSERT INTO SUPABASE
+  // INSERT USER
   // ================================
 
-  let { data, error } = await client
-    .from("login")
-    .insert([
-      {
-        name: name,
-        mobile: mobile,
-        password: password,
-        balance: 0,
+  const { data, error } =
+    await client
+      .from("login")
+      .insert([
+        {
+          name: name,
+          mobile: mobile,
+          password: password,
+          balance: 0,
 
-        // New user's own referral code
-        refer_code: myReferCode,
+          // New user's own code
+          refer_code: myReferCode,
 
-        // Referrer ka referral code
-        ref_by: ref_code || null
-      }
-    ])
-    .select();
+          // Share karne wale ka code
+          ref_by: ref_code || null
+        }
+      ])
+      .select();
 
 
   // ================================
@@ -403,10 +393,10 @@ function goLogin() {
 
   window.location.href =
     "index.html";
-
 }
 
 </script>
 
 </body>
 </html>
+```
